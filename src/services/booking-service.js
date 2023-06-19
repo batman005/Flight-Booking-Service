@@ -88,14 +88,16 @@ async function cancelBooking(bookingId) {
     }
 }
 
+
+
 async function cancelOldBookings() {
     try {
-        console.log("Inside service")
-        const time = new Date( Date.now() - 1000 * 300 ); // time 5 mins ago
+        console.log("Inside service");
+        const time = new Date(Date.now() - 1000 * 300); // time 5 mins ago
         const response = await bookingRepository.cancelOldBookings(time);
-
+        console.log(response);  
         return response;
-    } catch(error) {
+    } catch (error) {
         console.log(error);
     }
 }
