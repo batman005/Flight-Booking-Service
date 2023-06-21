@@ -91,14 +91,31 @@ async function cancelBooking(bookingId) {
 
 
 async function cancelOldBookings() {
-    try {
-        console.log("Inside service");
-        const time = new Date(Date.now() - 1000 * 300); // time 5 mins ago
+    console.log('running cron job');
+    const transaction = await db.sequelize.transaction();
+    try{
+        const time = new Date(Date.now() - 1000 * 300); // 5 minutes from now
+        const allBookingDetails = await bookingRepository.getAll(time);
+        for(const booking of allBookingDetails) {
+            const {flightId, noOfSeats} = booking.dataValues;
+            await axios.patch(
+                `${ServerConfig.FLIGHT_SERVICE}/api/v1/flights/${flightId}/seats`,
+                {
+                    seats: noOfSeats,
+                    dec: 0,
+                }
+            );
+        }
         const response = await bookingRepository.cancelOldBookings(time);
-        console.log(response);  
+        await transaction.commit();
         return response;
-    } catch (error) {
-        console.log(error);
+       
+    } catch(error) {
+        await transaction.rollback();
+        throw new AppError(
+            "An error occured while runnig the CRON JOB",
+            StatusCodes.INTERNAL_SERVER_ERROR
+        );
     }
 }
 

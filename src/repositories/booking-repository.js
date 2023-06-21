@@ -35,7 +35,6 @@ class BookingRepository extends CrudRepository {
 
     async cancelOldBookings(timestamp) {
         console.log("in repo");
-
         const response = await Booking.update({status: CANCELLED},{
             where: {
                 [Op.and]: [
@@ -56,10 +55,34 @@ class BookingRepository extends CrudRepository {
                     }
                 ]
             },
-            returning: true,
         });
         return response;
     }
+
+    async getAll(timestamp){
+        const response = await Booking.findAll({
+            where: {
+                [Op.and]: [
+                    {
+                        createdAt: {
+                            [Op.lt]: timestamp
+                        }
+                    }, 
+                    {
+                        status: {
+                            [Op.ne]: BOOKED
+                        }
+                    },
+                    {
+                        status: {
+                            [Op.ne]: CANCELLED
+                        }
+                    }
+                ]
+            },
+        });
+        return response;
+}
 }
 
 module.exports = BookingRepository;
