@@ -106,8 +106,9 @@ async function cancelOldBookings() {
                 }
             );
         }
-        const response = await bookingRepository.cancelOldBookings(time);
+        const response = await bookingRepository.cancelOldBookings(time);//Cancel Booking whose sessions are already expired seats and occupied by those bookings should be set free
         await transaction.commit();
+        console.log(response);
         return response;
        
     } catch(error) {
