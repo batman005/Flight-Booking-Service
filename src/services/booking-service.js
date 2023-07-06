@@ -2,7 +2,7 @@ const axios = require('axios');
 const {StatusCodes} = require('http-status-codes');
 
 const { BookingRepository } = require('../repositories');
-const { ServerConfig } = require('../config')
+const { ServerConfig, Queue} = require('../config')
 const db = require('../models');
 const AppError = require('../utils/errors/app-error');
 const {Enums} = require('../utils/common');
@@ -59,6 +59,11 @@ async function makePayment(data) {
         }
         // we assume here that payment is successful
          await bookingRepository.update(data.bookingId, {status: BOOKED}, transaction);
+         Queue.sendData({
+            recepientEmail: 'hrithikgswmai32@gmail.com',
+            subject: 'Flight Booked',
+            text: `Booking successfully done for the booking ${data.bookingId}`
+        })
         await transaction.commit();
     } catch(error) {
         await transaction.rollback();
@@ -90,8 +95,7 @@ async function cancelBooking(bookingId) {
 
 
 
-async function cancelOldBookings() {
-    console.log('running cron job');
+async function cancelOldBookings() {;
     const transaction = await db.sequelize.transaction();
     try{
         const time = new Date(Date.now() - 1000 * 300); // 5 minutes from now
@@ -108,7 +112,6 @@ async function cancelOldBookings() {
         }
         const response = await bookingRepository.cancelOldBookings(time);//Cancel Booking whose sessions are already expired seats and occupied by those bookings should be set free
         await transaction.commit();
-        console.log(response);
         return response;
        
     } catch(error) {
